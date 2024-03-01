@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     https://www.apache.org/licenses/LICENSE-2.0
+//	https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -59,7 +59,26 @@ type cache struct {
 	// ThreatTypes with a valid positive TTL for that hash.
 	nttls map[hashPrefix]time.Time
 
+	// The minimum amount of time to cache positive and negative responses
+	// from the server
+	pminTTL time.Duration
+	nminTTL time.Duration
+
 	now func() time.Time
+}
+
+func (c *cache) makeExpireTime(base time.Time, duration time.Duration) time.Time {
+	if duration.Nanoseconds() == 0 {
+		return base
+	}
+
+	min := c.now().Add(duration)
+
+	if min.After(base) {
+		return min
+	} else {
+		return base
+	}
 }
 
 // Update updates the cache according to the request that was made to the server
@@ -83,13 +102,13 @@ func (c *cache) Update(req *pb.SearchHashesRequest, resp *pb.SearchHashesRespons
 			c.pttls[fullHash] = make(map[ThreatType]time.Time)
 		}
 		for _, tt := range threat.ThreatTypes {
-			c.pttls[fullHash][ThreatType(tt)] = threat.ExpireTime.AsTime()
+			c.pttls[fullHash][ThreatType(tt)] = c.makeExpireTime(threat.ExpireTime.AsTime(), c.pminTTL)
 		}
 	}
 
 	// Insert negative TTLs for partial hashes.
 	if resp.GetNegativeExpireTime() != nil {
-		nttl := resp.GetNegativeExpireTime().AsTime()
+		nttl := c.makeExpireTime(resp.GetNegativeExpireTime().AsTime(), c.nminTTL)
 		partialHash := hashPrefix(req.HashPrefix)
 		c.nttls[partialHash] = nttl
 	}

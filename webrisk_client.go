@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     https://www.apache.org/licenses/LICENSE-2.0
+//	https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -181,6 +181,10 @@ type Config struct {
 	// If empty, no logs will be written.
 	Logger io.Writer
 
+	// The minimum TTLs to enforce for cached responses
+	PMinTTL time.Duration
+	NMinTTL time.Duration
+
 	// compressionTypes indicates how the threat entry sets can be compressed.
 	compressionTypes []pb.CompressionType
 
@@ -301,7 +305,7 @@ func NewUpdateClient(conf Config) (*UpdateClient, error) {
 	wr := &UpdateClient{
 		config: conf,
 		api:    conf.api,
-		c:      cache{now: conf.now},
+		c:      cache{pminTTL: conf.PMinTTL, nminTTL: conf.NMinTTL, now: conf.now},
 	}
 
 	// TODO: Verify that config.ThreatLists is a subset of the list obtained

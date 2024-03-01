@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     https://www.apache.org/licenses/LICENSE-2.0
+//	https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -203,12 +203,12 @@ import (
 	"syscall"
 	"time"
 
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
-	"github.com/rakyll/statik/fs"
+	"github.com/google/webrisk"
 	_ "github.com/google/webrisk/cmd/wrserver/statik"
 	pb "github.com/google/webrisk/internal/webrisk_proto"
-	"github.com/google/webrisk"
+	"github.com/rakyll/statik/fs"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -228,6 +228,8 @@ var (
 	proxyFlag       = flag.String("proxy", "", "proxy to use to connect to the HTTP server")
 	databaseFlag    = flag.String("db", "", "path to the Web Risk database.")
 	threatTypesFlag = flag.String("threatTypes", "ALL", "threat types to check against")
+	pminTTLFlag     = flag.String("pminTTL", "0s", "minimum time to cache positive responses")
+	nminTTLFlag     = flag.String("nminTTL", "0s", "minimum time to cache negative responses")
 )
 
 var threatTemplate = map[webrisk.ThreatType]string{
@@ -477,7 +479,7 @@ func runServer(srv *http.Server) (chan os.Signal, <-chan struct{}) {
 	// start listening for interrupts
 	exit := make(chan os.Signal, 1)
 	down := make(chan struct{})
-	
+
 	// runs shutdown and cleanup on an exit signal
 	go func() {
 		<-exit
@@ -517,12 +519,24 @@ func main() {
 		fmt.Fprintln(os.Stderr, "No -apikey specified")
 		os.Exit(1)
 	}
+	pminTTL, err := time.ParseDuration(*pminTTLFlag)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Invalid -pminTTL")
+		os.Exit(1)
+	}
+	nminTTL, err := time.ParseDuration(*nminTTLFlag)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Invalid -nminTTL")
+		os.Exit(1)
+	}
 	conf := webrisk.Config{
 		APIKey:        *apiKeyFlag,
 		ProxyURL:      *proxyFlag,
 		DBPath:        *databaseFlag,
 		ThreatListArg: *threatTypesFlag,
 		Logger:        os.Stderr,
+		PMinTTL:       pminTTL,
+		NMinTTL:       nminTTL,
 	}
 	wr, err := webrisk.NewUpdateClient(conf)
 	if err != nil {
