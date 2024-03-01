@@ -228,8 +228,8 @@ var (
 	proxyFlag       = flag.String("proxy", "", "proxy to use to connect to the HTTP server")
 	databaseFlag    = flag.String("db", "", "path to the Web Risk database.")
 	threatTypesFlag = flag.String("threatTypes", "ALL", "threat types to check against")
-	pminTTLFlag     = flag.String("pminTTL", "0s", "minimum time to cache positive responses")
-	nminTTLFlag     = flag.String("nminTTL", "0s", "minimum time to cache negative responses")
+	pminTTLFlag     = flag.String("pminTTL", os.Getenv("PMINTTL"), "minimum time to cache positive responses")
+	nminTTLFlag     = flag.String("nminTTL", os.Getenv("NMINTTL"), "minimum time to cache negative responses")
 )
 
 var threatTemplate = map[webrisk.ThreatType]string{
@@ -509,6 +509,14 @@ func runServer(srv *http.Server) (chan os.Signal, <-chan struct{}) {
 	return exit, down
 }
 
+func validateDuration(value string) string {
+	if len(value) == 0 {
+		return "0s"
+	}
+
+	return value
+}
+
 func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, usage, os.Args[0])
@@ -519,12 +527,12 @@ func main() {
 		fmt.Fprintln(os.Stderr, "No -apikey specified")
 		os.Exit(1)
 	}
-	pminTTL, err := time.ParseDuration(*pminTTLFlag)
+	pminTTL, err := time.ParseDuration(validateDuration(*pminTTLFlag))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Invalid -pminTTL")
 		os.Exit(1)
 	}
-	nminTTL, err := time.ParseDuration(*nminTTLFlag)
+	nminTTL, err := time.ParseDuration(validateDuration(*nminTTLFlag))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Invalid -nminTTL")
 		os.Exit(1)
