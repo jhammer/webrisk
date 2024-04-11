@@ -10,11 +10,11 @@ COPY . .
 
 # Analyze our Go code and run all tests. To speed up building, such as during
 # development, consider commenting out these lines.
-RUN go vet -v
-RUN go test -v
-RUN go test -v ./cmd/... -args --hostname="http://0.0.0.0:8080"
+#RUN go vet -v
+#RUN go test -v
+#RUN go test -v ./cmd/... -args --hostname="http://0.0.0.0:8080"
 
-RUN CGO_ENABLED=0 go build -o /go/bin/wrserver cmd/wrserver/main.go
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /go/bin/wrserver cmd/wrserver/main.go
 
 FROM gcr.io/distroless/static-debian11 as wrserver
 

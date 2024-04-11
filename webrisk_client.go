@@ -185,6 +185,9 @@ type Config struct {
 	PMinTTL time.Duration
 	NMinTTL time.Duration
 
+	// True if we should log URLs that require a server query
+	ShouldLogQueriesByAPI bool
+
 	// compressionTypes indicates how the threat entry sets can be compressed.
 	compressionTypes []pb.CompressionType
 
@@ -480,6 +483,10 @@ func (wr *UpdateClient) LookupURLsContext(ctx context.Context, urls []string) (t
 					HashPrefix:  []byte(partialHash),
 					ThreatTypes: tts,
 				})
+
+				if wr.config.ShouldLogQueriesByAPI {
+					wr.log.Printf("querying api for %v", url)
+				}
 			}
 		}
 	}

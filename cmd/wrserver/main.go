@@ -223,13 +223,14 @@ const (
 )
 
 var (
-	apiKeyFlag      = flag.String("apikey", os.Getenv("APIKEY"), "specify your Web Risk API key")
-	srvAddrFlag     = flag.String("srvaddr", "0.0.0.0:8080", "TCP network address the HTTP server should use")
-	proxyFlag       = flag.String("proxy", "", "proxy to use to connect to the HTTP server")
-	databaseFlag    = flag.String("db", "", "path to the Web Risk database.")
-	threatTypesFlag = flag.String("threatTypes", "ALL", "threat types to check against")
-	pminTTLFlag     = flag.String("pminTTL", os.Getenv("PMINTTL"), "minimum time to cache positive responses")
-	nminTTLFlag     = flag.String("nminTTL", os.Getenv("NMINTTL"), "minimum time to cache negative responses")
+	apiKeyFlag        = flag.String("apikey", os.Getenv("APIKEY"), "specify your Web Risk API key")
+	srvAddrFlag       = flag.String("srvaddr", "0.0.0.0:8080", "TCP network address the HTTP server should use")
+	proxyFlag         = flag.String("proxy", "", "proxy to use to connect to the HTTP server")
+	databaseFlag      = flag.String("db", "", "path to the Web Risk database.")
+	threatTypesFlag   = flag.String("threatTypes", "ALL", "threat types to check against")
+	pminTTLFlag       = flag.String("pminTTL", os.Getenv("PMINTTL"), "minimum time to cache positive responses")
+	nminTTLFlag       = flag.String("nminTTL", os.Getenv("NMINTTL"), "minimum time to cache negative responses")
+	logAPIQueriesFlag = flag.Bool("logAPIQueries", os.Getenv("LOGAPIQUERIES") == "yes", "log queries by API")
 )
 
 var threatTemplate = map[webrisk.ThreatType]string{
@@ -538,13 +539,14 @@ func main() {
 		os.Exit(1)
 	}
 	conf := webrisk.Config{
-		APIKey:        *apiKeyFlag,
-		ProxyURL:      *proxyFlag,
-		DBPath:        *databaseFlag,
-		ThreatListArg: *threatTypesFlag,
-		Logger:        os.Stderr,
-		PMinTTL:       pminTTL,
-		NMinTTL:       nminTTL,
+		APIKey:                *apiKeyFlag,
+		ProxyURL:              *proxyFlag,
+		DBPath:                *databaseFlag,
+		ThreatListArg:         *threatTypesFlag,
+		Logger:                os.Stderr,
+		PMinTTL:               pminTTL,
+		NMinTTL:               nminTTL,
+		ShouldLogQueriesByAPI: *logAPIQueriesFlag,
 	}
 	wr, err := webrisk.NewUpdateClient(conf)
 	if err != nil {
